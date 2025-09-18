@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Instagram Photo & Video Downloader</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:center;justify-content:center;height:100vh;background:#f6f7fb}
+    .card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 6px 20px rgba(13,20,40,0.08);width:420px}
+    input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px}
+    button{width:100%;padding:10px;border-radius:8px;border:0;background:#2563eb;color:white;font-weight:600}
+    .preview{margin-top:12px;text-align:center}
+    img, video{max-width:100%;border-radius:8px}
+    .note{font-size:12px;color:#6b7280;margin-top:10px}
+    a.download-link{display:inline-block;margin-top:8px;padding:8px 10px;background:#111;color:#fff;border-radius:8px;text-decoration:none;font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h3>Instagram Photo & Video Downloader</h3>
+    <input id="url" placeholder="Paste Instagram post URL or shortcode (e.g. https://www.instagram.com/p/SHORTCODE/)" />
+    <button id="go">Fetch media</button>
+    <div id="status" class="note"></div>
+    <div class="preview" id="preview"></div>
+    <div class="note">Works only with public posts. For private posts or stories this won't work. Use responsibly.</div>
+  </div>
+
+  <script>
+    const go = document.getElementById('go');
+    const urlIn = document.getElementById('url');
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
+
+    async function fetchMedia(){
+      status.textContent = 'Checking...';
+      preview.innerHTML = '';
+      const u = urlIn.value.trim();
+      if(!u){ status.textContent = 'Please paste a post URL or shortcode.'; return; }
+      try{
+        const apiUrl = '/.netlify/functions/download?url=' + encodeURIComponent(u);
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        if(!res.ok){ status.textContent = data.error || 'Failed'; return; }
+        status.textContent = `Detected ${data.type}.`;
+        const mediaUrl = data.media_url;
+        if(data.type === 'image'){
+          const img = document.createElement('img'); img.src = mediaUrl; preview.appendChild(img);
+          const a = document.createElement('a'); a.href = '/.netlify/functions/proxy?url=' + encodeURIComponent(mediaUrl); a.className='download-link'; a.download='instagram.jpg'; a.textContent='Download Image'; preview.appendChild(a);
+        }else if(data.type === 'video'){
+          const vid = document.createElement('video'); vid.controls = true; vid.src = mediaUrl; preview.appendChild(vid);
+          const a = document.createElement('a'); a.href = '/.netlify/functions/proxy?url=' + encodeURIComponent(mediaUrl); a.className='download-link'; a.download='instagram.mp4'; a.textContent='Download Video'; preview.appendChild(a);
+        }else{
+          const a = document.createElement('a'); a.href = mediaUrl; a.target='_blank'; a.textContent = 'Open media link'; preview.appendChild(a);
+        }
+      }catch(e){
+        console.error(e);
+        status.textContent = 'Error: ' + (e.message || 'unknown');
+      }
+    }
+
+    go.addEventListener('click', fetchMedia);
+    urlIn.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') fetchMedia(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "instagram-downloader-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build step needed'",
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^2.6.9"
+  }
+}
